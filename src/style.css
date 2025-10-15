@@ -3,3 +3,8 @@
   vertical-align: top;
   border: 1px solid salmon;
 }
+
+canvas {
+  border: thin solid black;
+  filter: drop-shadow(4px 4px 5px black);
+}
