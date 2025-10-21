@@ -1,10 +1,7 @@
-.icon {
-  width: 64px;
-  vertical-align: top;
-  border: 1px solid salmon;
-}
-
 canvas {
   border: thin solid black;
-  filter: drop-shadow(8px 8px 2px black);
+}
+
+.selected_button {
+  background-color: darkgrey;
 }

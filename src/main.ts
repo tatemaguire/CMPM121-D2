@@ -7,6 +7,8 @@ document.body.innerHTML = `
   <button id="clear">Clear</button>
   <button id="undo">Undo</button>
   <button id="redo">Redo</button>
+  <button id="makeThin" class="selected_button">Thin Stroke</button>
+  <button id="makeThick">Thick Stroke</button>
 `;
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -23,8 +25,10 @@ interface Displayable {
 
 class MarkerLine implements Displayable {
   points: Point[];
-  constructor(startPoint: Point) {
+  thickLine: boolean;
+  constructor(startPoint: Point, thickLine: boolean) {
     this.points = [startPoint];
+    this.thickLine = thickLine;
   }
   appendPoint(newPoint: Point) {
     this.points.push(newPoint);
@@ -35,6 +39,7 @@ class MarkerLine implements Displayable {
     for (const pt of this.points) {
       context.lineTo(pt.x, pt.y);
     }
+    context.lineWidth = this.thickLine ? 10 : 2;
     context.stroke();
   }
 }
@@ -42,10 +47,11 @@ class MarkerLine implements Displayable {
 const redoObjects: Displayable[] = [];
 const displayObjects: Displayable[] = [];
 let currentLine: MarkerLine | null = null;
+let currentlyThick = false;
 
 canvas.addEventListener("mousedown", (e) => {
   redoObjects.splice(0, redoObjects.length);
-  currentLine = new MarkerLine({ x: e.offsetX, y: e.offsetY });
+  currentLine = new MarkerLine({ x: e.offsetX, y: e.offsetY }, currentlyThick);
   displayObjects.push(currentLine);
 });
 
@@ -95,4 +101,19 @@ redoButton.addEventListener("click", () => {
     displayObjects.push(redoneObj);
     notify("display-changed");
   }
+});
+
+const thinButton = document.getElementById("makeThin") as HTMLButtonElement;
+const thickButton = document.getElementById("makeThick") as HTMLButtonElement;
+
+thinButton.addEventListener("click", () => {
+  currentlyThick = false;
+  thinButton.classList.add("selected_button");
+  thickButton.classList.remove("selected_button");
+});
+
+thickButton.addEventListener("click", () => {
+  currentlyThick = true;
+  thinButton.classList.remove("selected_button");
+  thickButton.classList.add("selected_button");
 });
