@@ -17,33 +17,52 @@ interface Point {
   y: number;
 }
 
-const lines: Point[][] = []; // tail element is most recently drawn
-const redoLines: Point[][] = []; // tail element is most recently undone
+interface Displayable {
+  display(context: CanvasRenderingContext2D): void;
+}
+
+class MarkerLine implements Displayable {
+  points: Point[];
+  constructor(startPoint: Point) {
+    this.points = [startPoint];
+  }
+  appendPoint(newPoint: Point) {
+    this.points.push(newPoint);
+  }
+  display(context: CanvasRenderingContext2D) {
+    context.beginPath();
+    context.moveTo(this.points[0].x, this.points[0].y);
+    for (const pt of this.points) {
+      context.lineTo(pt.x, pt.y);
+    }
+    context.stroke();
+  }
+}
+
+const redoObjects: Displayable[] = [];
+const displayObjects: Displayable[] = [];
+let currentLine: MarkerLine | null = null;
 
 canvas.addEventListener("mousedown", (e) => {
-  const line: Point[] = [];
-  line.push({ x: e.offsetX, y: e.offsetY });
-  lines.push(line);
-  redoLines.splice(0, redoLines.length);
+  redoObjects.splice(0, redoObjects.length);
+  currentLine = new MarkerLine({ x: e.offsetX, y: e.offsetY });
+  displayObjects.push(currentLine);
 });
 
 canvas.addEventListener("mousemove", (e) => {
   if (e.buttons & 1) {
-    const line = lines[lines.length - 1];
-    line.push({ x: e.offsetX, y: e.offsetY });
+    currentLine?.appendPoint({
+      x: e.offsetX,
+      y: e.offsetY,
+    });
     notify("display-changed");
   }
 });
 
 canvas.addEventListener("display-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (const line of lines) {
-    ctx.beginPath();
-    ctx.moveTo(line[0].x, line[0].y);
-    for (const pt of line) {
-      ctx.lineTo(pt.x, pt.y);
-    }
-    ctx.stroke();
+  for (const obj of displayObjects) {
+    obj.display(ctx);
   }
 });
 
@@ -54,17 +73,16 @@ function notify(message: string) {
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
 
 clearButton.addEventListener("click", () => {
-  lines.splice(0, lines.length);
-  redoLines.splice(0, redoLines.length);
+  displayObjects.splice(0, displayObjects.length);
   notify("display-changed");
 });
 
 const undoButton = document.getElementById("undo") as HTMLButtonElement;
 
 undoButton.addEventListener("click", () => {
-  const undoneLine = lines.pop();
-  if (undoneLine) {
-    redoLines.push(undoneLine);
+  const undoneObj = displayObjects.pop();
+  if (undoneObj) {
+    redoObjects.push(undoneObj);
     notify("display-changed");
   }
 });
@@ -72,9 +90,9 @@ undoButton.addEventListener("click", () => {
 const redoButton = document.getElementById("redo") as HTMLButtonElement;
 
 redoButton.addEventListener("click", () => {
-  const redoneLine = redoLines.pop();
-  if (redoneLine) {
-    lines.push(redoneLine);
+  const redoneObj = redoObjects.pop();
+  if (redoneObj) {
+    displayObjects.push(redoneObj);
     notify("display-changed");
   }
 });
