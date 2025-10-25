@@ -7,8 +7,12 @@ document.body.innerHTML = `
   <button id="clear">Clear</button>
   <button id="undo">Undo</button>
   <button id="redo">Redo</button>
-  <button id="makeThin" class="selected_button">Thin Stroke</button>
-  <button id="makeThick">Thick Stroke</button>
+  <br/><br/>
+  <button id="makeThin" class="selected_button">Thin Marker</button>
+  <button id="makeThick">Thick Marker</button>
+  <button id="sticker1">🫟</button>
+  <button id="sticker2">🩸</button>
+  <button id="sticker3">🦠</button>
 `;
 
 // ----------------------------------------------------------
@@ -31,8 +35,9 @@ class MarkerLine implements Displayable {
     this.points = [startPoint];
     this.thickLine = thickLine;
   }
-  appendPoint(newPoint: Point) {
+  drag(newPoint: Point) {
     this.points.push(newPoint);
+    notify("display-changed");
   }
   display(context: CanvasRenderingContext2D) {
     context.beginPath();
@@ -45,16 +50,84 @@ class MarkerLine implements Displayable {
   }
 }
 
-class ToolPreview implements Displayable {
-  cursor: Point;
-  constructor(cursor: Point) {
-    this.cursor = cursor;
+// deno-lint-ignore no-unused-vars
+class Sticker implements Displayable {
+  emoji: string;
+  centerPos: Point;
+  constructor(centerPos: Point, emoji: string) {
+    this.emoji = emoji;
+    this.centerPos = centerPos;
   }
-  display(context: CanvasRenderingContext2D) {
-    context.beginPath();
-    const radius = (currentlyThick ? 10 : 2) / 2;
-    context.arc(this.cursor.x, this.cursor.y, radius, 0, 2 * Math.PI);
-    context.fill();
+  display(context: CanvasRenderingContext2D): void {
+    context.fillText;
+  }
+}
+
+interface Tool extends Displayable {
+  visible: boolean;
+  cursor: Point;
+  onMouseDown(e: MouseEvent): void;
+  onMouseUp(e: MouseEvent): void;
+  onMouseMove(e: MouseEvent): void;
+  onMouseEnter(e: MouseEvent): void;
+  onMouseLeave(e: MouseEvent): void;
+}
+
+class MarkerTool implements Tool {
+  visible: boolean;
+  cursor: Point;
+  isThick: boolean;
+  currentLine: MarkerLine | null;
+
+  constructor(isThick: boolean) {
+    this.visible = true;
+    this.cursor = { x: 0, y: 0 };
+    this.isThick = isThick;
+    this.currentLine = null;
+  }
+  display(context: CanvasRenderingContext2D): void {
+    if (this.visible) {
+      context.beginPath();
+      const radius = (this.isThick ? 10 : 2) / 2;
+      context.arc(this.cursor.x, this.cursor.y, radius, 0, 2 * Math.PI);
+      context.fill();
+    }
+  }
+
+  onMouseDown(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+    this.visible = false;
+
+    if (!this.currentLine) {
+      this.currentLine = new MarkerLine(this.cursor, this.isThick);
+      displayObjects.push(this.currentLine);
+    }
+  }
+  onMouseUp(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+    this.visible = true;
+    this.currentLine = null;
+  }
+  onMouseMove(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+    if (e.buttons & 1) {
+      this.currentLine?.drag(this.cursor);
+    }
+  }
+  onMouseEnter(e: MouseEvent): void {
+    if (e.buttons & 1) {
+      this.onMouseDown(e);
+    } else {
+      this.cursor = { x: e.offsetX, y: e.offsetY };
+      this.visible = true;
+    }
+  }
+  onMouseLeave(e: MouseEvent): void {
+    if (e.buttons & 1) {
+      this.onMouseUp(e);
+    } else {
+      this.visible = false;
+    }
   }
 }
 
@@ -67,9 +140,7 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 const redoObjects: Displayable[] = [];
 const displayObjects: Displayable[] = [];
-let currentLine: MarkerLine | null = null;
-let currentlyThick = false;
-let toolPreview: ToolPreview | null = null;
+let currentTool: Tool = new MarkerTool(false);
 
 // ----------------------------------------------------------
 // ----------------- Canvas Mouse Events --------------------
@@ -77,39 +148,28 @@ let toolPreview: ToolPreview | null = null;
 
 canvas.addEventListener("mousedown", (e) => {
   redoObjects.splice(0, redoObjects.length);
-  currentLine = new MarkerLine({ x: e.offsetX, y: e.offsetY }, currentlyThick);
-  displayObjects.push(currentLine);
 
-  toolPreview = null;
+  currentTool.onMouseDown(e);
   notify("tool-moved");
 });
 
 canvas.addEventListener("mouseup", (e) => {
-  toolPreview = new ToolPreview({ x: e.offsetX, y: e.offsetY });
+  currentTool.onMouseUp(e);
   notify("tool-moved");
 });
 
 canvas.addEventListener("mousemove", (e) => {
-  if (e.buttons & 1) {
-    currentLine?.appendPoint({
-      x: e.offsetX,
-      y: e.offsetY,
-    });
-    notify("display-changed");
-  }
-  if (toolPreview) {
-    toolPreview.cursor = { x: e.offsetX, y: e.offsetY };
-    notify("tool-moved");
-  }
-});
-
-canvas.addEventListener("mouseenter", (e) => {
-  toolPreview = new ToolPreview({ x: e.offsetX, y: e.offsetY });
+  currentTool.onMouseMove(e);
   notify("tool-moved");
 });
 
-canvas.addEventListener("mouseleave", () => {
-  toolPreview = null;
+canvas.addEventListener("mouseenter", (e) => {
+  currentTool.onMouseEnter(e);
+  notify("tool-moved");
+});
+
+canvas.addEventListener("mouseleave", (e) => {
+  currentTool.onMouseLeave(e);
   notify("tool-moved");
 });
 
@@ -122,7 +182,7 @@ function redraw() {
   for (const obj of displayObjects) {
     obj.display(ctx);
   }
-  toolPreview?.display(ctx);
+  currentTool?.display(ctx);
 }
 
 canvas.addEventListener("display-changed", redraw);
@@ -140,6 +200,7 @@ const clearButton = document.getElementById("clear") as HTMLButtonElement;
 
 clearButton.addEventListener("click", () => {
   displayObjects.splice(0, displayObjects.length);
+  redoObjects.splice(0, redoObjects.length);
   notify("display-changed");
 });
 
@@ -167,13 +228,24 @@ const thinButton = document.getElementById("makeThin") as HTMLButtonElement;
 const thickButton = document.getElementById("makeThick") as HTMLButtonElement;
 
 thinButton.addEventListener("click", () => {
-  currentlyThick = false;
+  currentTool = new MarkerTool(false);
   thinButton.classList.add("selected_button");
   thickButton.classList.remove("selected_button");
 });
 
 thickButton.addEventListener("click", () => {
-  currentlyThick = true;
+  currentTool = new MarkerTool(true);
   thinButton.classList.remove("selected_button");
   thickButton.classList.add("selected_button");
+});
+
+const sticker1Button = document.getElementById("sticker1") as HTMLButtonElement;
+const sticker2Button = document.getElementById("sticker2") as HTMLButtonElement;
+const sticker3Button = document.getElementById("sticker3") as HTMLButtonElement;
+
+sticker1Button.addEventListener("click", () => {
+});
+sticker2Button.addEventListener("click", () => {
+});
+sticker3Button.addEventListener("click", () => {
 });
