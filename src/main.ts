@@ -262,29 +262,44 @@ redoButton.addEventListener("click", () => {
 
 const thinButton = document.getElementById("makeThin") as HTMLButtonElement;
 const thickButton = document.getElementById("makeThick") as HTMLButtonElement;
-
-thinButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(false);
-  thinButton.classList.add("selected_button");
-  thickButton.classList.remove("selected_button");
-});
-
-thickButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(true);
-  thinButton.classList.remove("selected_button");
-  thickButton.classList.add("selected_button");
-});
-
 const sticker1Button = document.getElementById("sticker1") as HTMLButtonElement;
 const sticker2Button = document.getElementById("sticker2") as HTMLButtonElement;
 const sticker3Button = document.getElementById("sticker3") as HTMLButtonElement;
 
+const toolButtons: HTMLButtonElement[] = [
+  thinButton,
+  thickButton,
+  sticker1Button,
+  sticker2Button,
+  sticker3Button,
+];
+
+function selectButton(button: HTMLButtonElement) {
+  for (const b of toolButtons) {
+    b.classList.remove("selected_button");
+  }
+  button.classList.add("selected_button");
+}
+
+thinButton.addEventListener("click", () => {
+  currentTool = new MarkerTool(false);
+  selectButton(thinButton);
+});
+
+thickButton.addEventListener("click", () => {
+  currentTool = new MarkerTool(true);
+  selectButton(thickButton);
+});
+
 sticker1Button.addEventListener("click", () => {
   currentTool = new StickerTool(sticker1Button.innerText);
+  selectButton(sticker1Button);
 });
 sticker2Button.addEventListener("click", () => {
   currentTool = new StickerTool(sticker2Button.innerText);
+  selectButton(sticker2Button);
 });
 sticker3Button.addEventListener("click", () => {
   currentTool = new StickerTool(sticker3Button.innerText);
+  selectButton(sticker3Button);
 });
