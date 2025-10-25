@@ -50,7 +50,6 @@ class MarkerLine implements Displayable {
   }
 }
 
-// deno-lint-ignore no-unused-vars
 class Sticker implements Displayable {
   emoji: string;
   centerPos: Point;
@@ -59,7 +58,8 @@ class Sticker implements Displayable {
     this.centerPos = centerPos;
   }
   display(context: CanvasRenderingContext2D): void {
-    context.fillText;
+    context.textAlign = "center";
+    context.fillText(this.emoji, this.centerPos.x, this.centerPos.y);
   }
 }
 
@@ -128,6 +128,42 @@ class MarkerTool implements Tool {
     } else {
       this.visible = false;
     }
+  }
+}
+
+class StickerTool implements Tool {
+  visible: boolean;
+  cursor: Point;
+  emoji: string;
+  constructor(emoji: string) {
+    this.visible = true;
+    this.cursor = { x: 0, y: 0 };
+    this.emoji = emoji;
+  }
+  display(context: CanvasRenderingContext2D): void {
+    if (this.visible) {
+      context.textAlign = "center";
+      context.fillText(this.emoji, this.cursor.x, this.cursor.y);
+    }
+  }
+
+  onMouseDown(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+    const sticker = new Sticker(this.cursor, this.emoji);
+    displayObjects.push(sticker);
+  }
+  onMouseUp(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+  }
+  onMouseMove(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+  }
+  onMouseEnter(e: MouseEvent): void {
+    this.cursor = { x: e.offsetX, y: e.offsetY };
+    this.visible = true;
+  }
+  onMouseLeave(): void {
+    this.visible = false;
   }
 }
 
@@ -244,8 +280,11 @@ const sticker2Button = document.getElementById("sticker2") as HTMLButtonElement;
 const sticker3Button = document.getElementById("sticker3") as HTMLButtonElement;
 
 sticker1Button.addEventListener("click", () => {
+  currentTool = new StickerTool(sticker1Button.innerText);
 });
 sticker2Button.addEventListener("click", () => {
+  currentTool = new StickerTool(sticker2Button.innerText);
 });
 sticker3Button.addEventListener("click", () => {
+  currentTool = new StickerTool(sticker3Button.innerText);
 });
