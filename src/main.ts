@@ -7,13 +7,19 @@ document.body.innerHTML = `
   <button id="clear">Clear</button>
   <button id="undo">Undo</button>
   <button id="redo">Redo</button>
+  <button id="createCustomSticker">Create Custom Sticker</button>
   <br/><br/>
   <button id="makeThin" class="selected_button">Thin Marker</button>
   <button id="makeThick">Thick Marker</button>
-  <button id="sticker1">🫟</button>
-  <button id="sticker2">🩸</button>
-  <button id="sticker3">🦠</button>
+  <br/><br/>
+  <div id="stickerButtons"></div>
 `;
+
+const defaultStickers: string[] = [
+  "🫟",
+  "🩸",
+  "🦠",
+];
 
 // ----------------------------------------------------------
 // ----------------- Interfaces and classes -----------------
@@ -260,22 +266,34 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+const createCustomStickerButton = document.getElementById(
+  "createCustomSticker",
+) as HTMLButtonElement;
+
+createCustomStickerButton.addEventListener("click", () => {
+  const emoji = prompt(
+    "Enter the emoji for your custom sticker:",
+    "❌",
+  ) as string;
+  addStickerTool(emoji);
+});
+
+// ----------------------------------------------------------
+// -------------------- Tool Buttons ------------------------
+// ----------------------------------------------------------
+
 const thinButton = document.getElementById("makeThin") as HTMLButtonElement;
 const thickButton = document.getElementById("makeThick") as HTMLButtonElement;
-const sticker1Button = document.getElementById("sticker1") as HTMLButtonElement;
-const sticker2Button = document.getElementById("sticker2") as HTMLButtonElement;
-const sticker3Button = document.getElementById("sticker3") as HTMLButtonElement;
+const stickerDiv = document.getElementById("stickerButtons") as HTMLDivElement;
 
-const toolButtons: HTMLButtonElement[] = [
-  thinButton,
-  thickButton,
-  sticker1Button,
-  sticker2Button,
-  sticker3Button,
-];
+const markerButtons: HTMLButtonElement[] = [thinButton, thickButton];
+const stickerButtons: HTMLButtonElement[] = [];
 
 function selectButton(button: HTMLButtonElement) {
-  for (const b of toolButtons) {
+  for (const b of markerButtons) {
+    b.classList.remove("selected_button");
+  }
+  for (const b of stickerButtons) {
     b.classList.remove("selected_button");
   }
   button.classList.add("selected_button");
@@ -291,15 +309,15 @@ thickButton.addEventListener("click", () => {
   selectButton(thickButton);
 });
 
-sticker1Button.addEventListener("click", () => {
-  currentTool = new StickerTool(sticker1Button.innerText);
-  selectButton(sticker1Button);
-});
-sticker2Button.addEventListener("click", () => {
-  currentTool = new StickerTool(sticker2Button.innerText);
-  selectButton(sticker2Button);
-});
-sticker3Button.addEventListener("click", () => {
-  currentTool = new StickerTool(sticker3Button.innerText);
-  selectButton(sticker3Button);
-});
+function addStickerTool(emoji: string) {
+  const newButton = document.createElement("button");
+  newButton.innerText = emoji;
+  newButton.addEventListener("click", () => {
+    currentTool = new StickerTool(emoji);
+    selectButton(newButton);
+  });
+  stickerDiv.appendChild(newButton);
+  stickerButtons.push(newButton);
+}
+
+defaultStickers.forEach(addStickerTool);
