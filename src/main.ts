@@ -13,6 +13,8 @@ document.body.innerHTML = `
   <button id="makeThick">Thick Marker</button>
   <br/><br/>
   <div id="stickerButtons"></div>
+  <br/>
+  <button id="export">Export</button>
 `;
 
 const defaultStickers: string[] = [
@@ -278,6 +280,21 @@ createCustomStickerButton.addEventListener("click", () => {
   addStickerTool(emoji);
 });
 
+const exportButton = document.getElementById("export") as HTMLButtonElement;
+
+exportButton.addEventListener("click", () => {
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+  const exportCtx = exportCanvas.getContext("2d") as CanvasRenderingContext2D;
+  exportCtx.scale(4, 4);
+  displayObjects.forEach((elem) => elem.display(exportCtx));
+
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+});
 // ----------------------------------------------------------
 // -------------------- Tool Buttons ------------------------
 // ----------------------------------------------------------
