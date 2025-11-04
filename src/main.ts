@@ -53,9 +53,11 @@ interface Tool extends Displayable {
 class MarkerLine implements Displayable {
   points: Point[];
   thickLine: boolean;
-  constructor(startPoint: Point, thickLine: boolean) {
+  color: string;
+  constructor(startPoint: Point, thickLine: boolean, color: string) {
     this.points = [startPoint];
     this.thickLine = thickLine;
+    this.color = color;
   }
   drag(newPoint: Point) {
     this.points.push(newPoint);
@@ -68,6 +70,7 @@ class MarkerLine implements Displayable {
       context.lineTo(pt.x, pt.y);
     }
     context.lineWidth = this.thickLine ? 10 : 2;
+    context.strokeStyle = this.color;
     context.stroke();
   }
 }
@@ -96,18 +99,21 @@ class MarkerTool implements Tool {
   cursor: Point;
   isThick: boolean;
   currentLine: MarkerLine | null;
+  color: string;
 
-  constructor(isThick: boolean) {
+  constructor(isThick: boolean, color: string) {
     this.visible = true;
     this.cursor = { x: 0, y: 0 };
     this.isThick = isThick;
     this.currentLine = null;
+    this.color = color;
   }
   display(context: CanvasRenderingContext2D): void {
     if (this.visible) {
       context.beginPath();
       const radius = (this.isThick ? 10 : 2) / 2;
       context.arc(this.cursor.x, this.cursor.y, radius, 0, 2 * Math.PI);
+      context.fillStyle = this.color;
       context.fill();
     }
   }
@@ -117,7 +123,7 @@ class MarkerTool implements Tool {
     this.visible = false;
 
     if (!this.currentLine) {
-      this.currentLine = new MarkerLine(this.cursor, this.isThick);
+      this.currentLine = new MarkerLine(this.cursor, this.isThick, this.color);
       displayObjects.push(this.currentLine);
     }
   }
@@ -194,7 +200,7 @@ const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 const redoObjects: Displayable[] = [];
 const displayObjects: Displayable[] = [];
-let currentTool: Tool = new MarkerTool(false);
+let currentTool: Tool = new MarkerTool(false, "black");
 
 // ----------------------------------------------------------
 // ----------------- Canvas Mouse Events --------------------
@@ -327,12 +333,12 @@ function selectButton(button: HTMLButtonElement) {
 }
 
 thinButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(false);
+  currentTool = new MarkerTool(false, "black");
   selectButton(thinButton);
 });
 
 thickButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(true);
+  currentTool = new MarkerTool(true, "red");
   selectButton(thickButton);
 });
 
