@@ -24,7 +24,7 @@ const defaultStickers: string[] = [
 ];
 
 // ----------------------------------------------------------
-// ----------------- Interfaces and classes -----------------
+// ---------------------- Interfaces ------------------------
 // ----------------------------------------------------------
 
 interface Point {
@@ -35,6 +35,20 @@ interface Point {
 interface Displayable {
   display(context: CanvasRenderingContext2D): void;
 }
+
+interface Tool extends Displayable {
+  visible: boolean;
+  cursor: Point;
+  onMouseDown(e: MouseEvent): void;
+  onMouseUp(e: MouseEvent): void;
+  onMouseMove(e: MouseEvent): void;
+  onMouseEnter(e: MouseEvent): void;
+  onMouseLeave(e: MouseEvent): void;
+}
+
+// ----------------------------------------------------------
+// ------------------------ Classes -------------------------
+// ----------------------------------------------------------
 
 class MarkerLine implements Displayable {
   points: Point[];
@@ -75,16 +89,6 @@ class Sticker implements Displayable {
     );
     context.setTransform(context.getTransform().scale(0.25, 0.25));
   }
-}
-
-interface Tool extends Displayable {
-  visible: boolean;
-  cursor: Point;
-  onMouseDown(e: MouseEvent): void;
-  onMouseUp(e: MouseEvent): void;
-  onMouseMove(e: MouseEvent): void;
-  onMouseEnter(e: MouseEvent): void;
-  onMouseLeave(e: MouseEvent): void;
 }
 
 class MarkerTool implements Tool {
