@@ -67,7 +67,13 @@ class Sticker implements Displayable {
   }
   display(context: CanvasRenderingContext2D): void {
     context.textAlign = "center";
-    context.fillText(this.emoji, this.centerPos.x, this.centerPos.y);
+    context.setTransform(context.getTransform().scale(4, 4));
+    context.fillText(
+      this.emoji,
+      this.centerPos.x / 4 + 2,
+      this.centerPos.y / 4 + 3,
+    );
+    context.setTransform(context.getTransform().scale(0.25, 0.25));
   }
 }
 
@@ -150,8 +156,8 @@ class StickerTool implements Tool {
   }
   display(context: CanvasRenderingContext2D): void {
     if (this.visible) {
-      context.textAlign = "center";
-      context.fillText(this.emoji, this.cursor.x, this.cursor.y);
+      const toolPreview = new Sticker(this.cursor, this.emoji);
+      toolPreview.display(context);
     }
   }
 
@@ -287,7 +293,7 @@ exportButton.addEventListener("click", () => {
   exportCanvas.width = 1024;
   exportCanvas.height = 1024;
   const exportCtx = exportCanvas.getContext("2d") as CanvasRenderingContext2D;
-  exportCtx.scale(4, 4);
+  exportCtx.setTransform(exportCtx.getTransform().scale(4, 4));
   displayObjects.forEach((elem) => elem.display(exportCtx));
 
   const anchor = document.createElement("a");
