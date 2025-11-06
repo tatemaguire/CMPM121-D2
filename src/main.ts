@@ -311,6 +311,7 @@ exportButton.addEventListener("click", () => {
   anchor.download = "sketchpad.png";
   anchor.click();
 });
+
 // ----------------------------------------------------------
 // -------------------- Tool Buttons ------------------------
 // ----------------------------------------------------------
@@ -333,12 +334,12 @@ function selectButton(button: HTMLButtonElement) {
 }
 
 thinButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(false, "black");
+  currentTool = new MarkerTool(false, randomColor());
   selectButton(thinButton);
 });
 
 thickButton.addEventListener("click", () => {
-  currentTool = new MarkerTool(true, "red");
+  currentTool = new MarkerTool(true, randomColor());
   selectButton(thickButton);
 });
 
@@ -354,3 +355,12 @@ function addStickerTool(emoji: string) {
 }
 
 defaultStickers.forEach(addStickerTool);
+
+// ----------------------------------------------------------
+// ------------------- Helper Functions ---------------------
+// ----------------------------------------------------------
+
+function randomColor(): string {
+  const hue = Math.floor(Math.random() * 360);
+  return "hsl(" + hue + ", 50%, 50%)";
+}
